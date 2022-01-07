@@ -1,0 +1,22 @@
+{
+  "name": "@zingle/sftpd",
+  "version": "0.0.1",
+  "description": "SFTP frontend daemon w/ REST interface",
+  "type": "module",
+  "bin": "./bin/sftpd.js",
+  "exports": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Zingle/sftpd.git"
+  },
+  "author": "Richard Remer <reanjr@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Zingle/sftpd/issues"
+  },
+  "homepage": "https://github.com/Zingle/sftpd#readme",
+  "dependencies": {
+    "express": "^4.17.2",
+    "tlsopt": "^3.1.0"
+  }
+}
