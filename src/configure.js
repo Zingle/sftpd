@@ -21,7 +21,7 @@ export default function configure(env, argv) {
     }
 
     if (config.admin && typeof config.admin?.port !== "number") {
-      console.warn("admin port missing or invalid; using default");
+      console.warn(`using default admin port ${DEFAULT_ADMIN_PORT}`);
       config.admin.port = DEFAULT_ADMIN_PORT;
     }
 
