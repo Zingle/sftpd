@@ -4,6 +4,7 @@ const {pbkdf2} = hash;
 
 export default function createAuthenticationListener({userdb}) {
   return async function authenticationListener(ctx) {
+    const client = this;
     const methods = [];
     const user = await userdb.getItem(ctx.username);
 
@@ -16,8 +17,12 @@ export default function createAuthenticationListener({userdb}) {
 
     switch (ctx.method) {
       case "password":
-        return await pbkdf2(ctx.password, user.hash)
-          ? ctx.accept() : ctx.reject(methods);
+        if (await pbkdf2(ctx.password, user.hash)) {
+          client.username = ctx.username;
+          return ctx.accept();
+        } else {
+          return ctx.reject(methods);
+        }
       case "publickey":
         return ctx.reject(methods);
       default:
