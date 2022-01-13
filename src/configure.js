@@ -1,5 +1,5 @@
 import {readFileSync} from "fs";
-import {DEFAULT_CONF, DEFAULT_ADMIN_PORT} from "@zingle/sftpd";
+import {DEFAULT_CONF, DEFAULT_ADMIN_PORT, DEFAULT_SFTP_BANNER} from "@zingle/sftpd";
 
 export default function configure(env, argv) {
   const config = defaults();
@@ -28,7 +28,7 @@ function defaults(config={}) {
   config.conf = DEFAULT_CONF;
   config.help = false;
   config.admin = false;
-  config.ssh = false;
+  config.sftp = false;
   config.error = false;
   return config;
 }
@@ -71,6 +71,15 @@ function readconf(config, conf) {
     }
   } else {
     console.warn(`sftpd: admin endpoint not configured`);
+  }
+
+  if (conf.sftp && conf.sftp.hostKeys && conf.sftp.hostKeys.length) {
+    const {sftp: {banner, hostKeys}} = conf;
+    config.sftp = {hostKeys, banner: DEFAULT_SFTP_BANNER};
+
+    if (banner) {
+      config.sftp.banner = banner;
+    }
   }
 
   return config;
