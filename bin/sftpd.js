@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 
-import tlsopt from "tlsopt";
-import express from "express";
-import basic from "express-basic-auth";
-import {configure} from "@zingle/sftpd";
+import {configure, createAdminListener, createAdminServer} from "@zingle/sftpd";
 
 const config = configure(process.env, process.argv);
 
@@ -23,16 +20,12 @@ function launch(config) {
   }
 
   if (config.admin) {
-    const {admin: {user, pass, port}} = config;
-    const app = express();
-    const server = tlsopt.createServerSync(app);
-
-    app.use(basic({users: {[user]: pass}}));
-
-    console.info(`sftpd: admin endpoint listening on port ${port}`);
+    const {port} = config.admin;
+    const listener = createAdminListener(config.admin);
+    const server = createAdminServer(listener);
 
     server.listen(port, function () {
-      const {port} = this.address();
+      console.info(`sftpd: admin endpoint listening on port ${port}`);
     });
   }
 }
