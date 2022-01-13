@@ -9,18 +9,18 @@ export class TemporaryStorage {
     }
 
     await tick();
-    return this.map.get(keyName);
+    return JSON.parse(this.map.get(keyName) || null);
   }
 
   async setItem(keyName, keyValue) {
     if (typeof keyName !== "string") {
       throw new TypeError("keyName must be a string");
-    } else if (typeof keyValue !== "string") {
-      throw new TypeError("keyValue must be a string");
+    } else if (typeof keyValue !== "object") {
+      throw new TypeError("keyValue must be an object");
     }
 
     await tick();
-    this.map.set(keyName, keyValue);
+    this.map.set(keyName, JSON.stringify(keyValue));
   }
 
   async removeItem(keyName) {

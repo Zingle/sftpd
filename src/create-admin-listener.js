@@ -28,18 +28,18 @@ export default function createAdminListener({user, pass, userdb}) {
 
     const hash = password ? await pbkdf2(password) : undefined;
     const user = {username, hash, key, uri: `/user/${username}`};
-    await userdb.setItem(username, JSON.stringify(user));
+    await userdb.setItem(username, user);
 
     http.send303(res, new URL(user.uri, req.fullURL));
   });
 
   app.get("/user/:username", async (req, res) => {
     const {username} = req.params;
-    const encodedUser = await userdb.getItem(username);
+    const user = await userdb.getItem(username);
 
-    if (!encodedUser) return http.send404();
+    if (!user) return http.send404();
 
-    res.json(JSON.parse(encodedUser));
+    res.json(user);
   });
 
   // setup fallback handlers
