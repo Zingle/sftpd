@@ -1,3 +1,5 @@
+import {ftp} from "@zingle/sftpd";
+
 export default function createSesssionListener() {
   return function sessionListener(accept, reject) {
     // ssh2 API makes is unclear if session can trigger before authentication
@@ -9,7 +11,9 @@ export default function createSesssionListener() {
     accept().once("sftp", (accept, reject) => {
       console.info(`sftpd: starting SFTP session -- ${this.username}`);
 
-      accept();
+      const sftp = accept();
+
+      sftp.on("REALPATH", ftp.realpathListener(this.username));
     });
   };
 }
