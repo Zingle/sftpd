@@ -9,3 +9,6 @@ export {default as createAdminServer} from "./src/create-admin-server.js";
 export {default as createAuthenticationListener} from "./src/create-authentication-listener.js";
 export {default as createConnectionListener} from "./src/create-connection-listener.js";
 export {default as createSFTPServer} from "./src/create-sftp-server.js";
+export * as http from "./src/http.js";
+export {TemporaryStorage} from "./src/storage.js";
+export {default as url} from "./src/url.js";
