@@ -5,12 +5,21 @@ import express from "express";
 import basic from "express-basic-auth";
 import {configure} from "@zingle/sftpd";
 
-launch(configure(process.env, process.argv));
+const config = configure(process.env, process.argv);
+
+if (false === launch(config)) {
+  process.exit(1);
+}
 
 function launch(config) {
   if (config.help) {
     console.log(`Usage: sftpd [<config-file>]`);
     return;
+  }
+
+  if (config.error) {
+    console.error(`sftpd: ${config.error.message}`);
+    return false;
   }
 
   if (config.admin) {
@@ -20,7 +29,7 @@ function launch(config) {
 
     app.use(basic({users: {[user]: pass}}));
 
-    console.info(`enabling admin endpoint on port ${port}`);
+    console.info(`sftpd: admin endpoint listening on port ${port}`);
 
     server.listen(port, function () {
       const {port} = this.address();
