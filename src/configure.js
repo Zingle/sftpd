@@ -65,7 +65,6 @@ function readconf(config, conf) {
   if (conf.admin && conf.admin.user && conf.admin.pass) {
     const {admin: {user, pass, port}} = conf;
     config.admin = {user, pass, port: DEFAULT_ADMIN_PORT};
-    config.admin.userdb = config.userdb;
 
     if (port && Number.isInteger(Number(port)) && port > 0) {
       config.admin.port = Number(port);
@@ -80,7 +79,6 @@ function readconf(config, conf) {
   if (conf.sftp && conf.sftp.hostKeys && conf.sftp.hostKeys.length) {
     const {sftp: {banner, hostKeys, port}} = conf;
     config.sftp = {hostKeys, banner: DEFAULT_SFTP_BANNER, port: DEFAULT_SFTP_PORT};
-    config.sftp.userdb = config.userdb;
 
     if (banner) {
       config.sftp.banner = banner;

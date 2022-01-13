@@ -11,6 +11,8 @@ if (false === launch(config)) {
 }
 
 function launch(config) {
+  const {userdb} = config;
+
   if (config.help) {
     console.log(`Usage: sftpd [<config-file>]`);
     return;
@@ -22,8 +24,9 @@ function launch(config) {
   }
 
   if (config.admin) {
-    const {port} = config.admin;
-    const listener = createAdminListener(config.admin);
+    const admin = {...config.admin, userdb};
+    const {port} = admin;
+    const listener = createAdminListener(admin);
     const server = createAdminServer(listener);
 
     server.listen(port, function () {
@@ -32,9 +35,10 @@ function launch(config) {
   }
 
   if (config.sftp) {
-    const {port} = config.sftp;
+    const sftp = {...config.sftp, userdb};
+    const {port} = sftp;
     const listener = createConnectionListener();
-    const server = createSFTPServer(config.sftp, listener);
+    const server = createSFTPServer(sftp, listener);
 
     server.listen(port, function() {
       console.info(`sftpd: SFTP endpoint listening on port ${port}`);

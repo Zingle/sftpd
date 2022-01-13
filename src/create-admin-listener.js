@@ -1,6 +1,8 @@
 import express from "express";
 import basic from "express-basic-auth";
-import {http, url} from "@zingle/sftpd";
+import {hash, http, url} from "@zingle/sftpd";
+
+const {pbkdf2} = hash;
 
 export default function createAdminListener({user, pass, userdb}) {
   const app = express();
@@ -24,8 +26,8 @@ export default function createAdminListener({user, pass, userdb}) {
       return http.send409(res, `username already exists: ${username}`);
     }
 
-    // TODO: hash password before writing
-    const user = {username, password, key, uri: `/user/${username}`};
+    const hash = password ? await pbkdf2(password) : undefined;
+    const user = {username, hash, key, uri: `/user/${username}`};
     await userdb.setItem(username, JSON.stringify(user));
 
     http.send303(res, new URL(user.uri, req.fullURL));
