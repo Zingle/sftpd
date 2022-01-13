@@ -11,7 +11,7 @@ export {default as createConnectionListener} from "./src/create-connection-liste
 export {default as createReadyListener} from "./src/create-ready-listener.js";
 export {default as createSesssionListener} from "./src/create-session-listener.js";
 export {default as createSFTPServer} from "./src/create-sftp-server.js";
-export * as ftp from "./src/ftp.js";
+export {FTPSession} from "./src/ftp-session.js";
 export * as hash from "./src/hash.js";
 export * as http from "./src/http.js";
 export {TemporaryStorage} from "./src/storage.js";
