@@ -6,5 +6,6 @@ export const DEFAULT_SFTP_PORT = 22;
 export {default as configure} from "./src/configure.js";
 export {default as createAdminListener} from "./src/create-admin-listener.js";
 export {default as createAdminServer} from "./src/create-admin-server.js";
+export {default as createAuthenticationListener} from "./src/create-authentication-listener.js";
 export {default as createConnectionListener} from "./src/create-connection-listener.js";
 export {default as createSFTPServer} from "./src/create-sftp-server.js";
