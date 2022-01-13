@@ -1,5 +1,6 @@
 import {readFileSync} from "fs";
-import {DEFAULT_CONF, DEFAULT_ADMIN_PORT, DEFAULT_SFTP_BANNER} from "@zingle/sftpd";
+import {DEFAULT_CONF, DEFAULT_ADMIN_PORT} from "@zingle/sftpd";
+import {DEFAULT_SFTP_BANNER, DEFAULT_SFTP_PORT} from "@zingle/sftpd";
 
 export default function configure(env, argv) {
   const config = defaults();
@@ -63,23 +64,32 @@ function readconf(config, conf) {
     const {admin: {user, pass, port}} = conf;
     config.admin = {user, pass, port: DEFAULT_ADMIN_PORT};
 
-    if (port && isInteger(Number(port)) && port > 0) {
+    if (port && Number.isInteger(Number(port)) && port > 0) {
       config.admin.port = Number(port);
     } else if (port) {
       console.warn(`sftpd: invalid admin port -- ${port}`);
-      console.warn(`sftpd: using default port -- ${config.admin.port}`);
+      console.warn(`sftpd: using default admin port -- ${config.admin.port}`);
     }
   } else {
     console.warn(`sftpd: admin endpoint not configured`);
   }
 
   if (conf.sftp && conf.sftp.hostKeys && conf.sftp.hostKeys.length) {
-    const {sftp: {banner, hostKeys}} = conf;
-    config.sftp = {hostKeys, banner: DEFAULT_SFTP_BANNER};
+    const {sftp: {banner, hostKeys, port}} = conf;
+    config.sftp = {hostKeys, banner: DEFAULT_SFTP_BANNER, port: DEFAULT_SFTP_PORT};
 
     if (banner) {
       config.sftp.banner = banner;
     }
+
+    if (port && Number.isInteger(Number(port)) && port > 0) {
+      config.sftp.port = Number(port);
+    } else if (port) {
+      console.warn(`sftpd: invalid SFTP port -- ${port}`);
+      console.warn(`sftpd: using default SFTP port -- ${config.sftp.port}`);
+    }
+  } else {
+    console.warn(`sftpd: SFTP endpoint not configured`);
   }
 
   return config;

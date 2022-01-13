@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-import {configure, createAdminListener, createAdminServer} from "@zingle/sftpd";
+import {configure} from "@zingle/sftpd";
+import {createAdminListener, createAdminServer} from "@zingle/sftpd";
+import {createConnectionListener, createSFTPServer} from "@zingle/sftpd";
 
 const config = configure(process.env, process.argv);
 
@@ -27,5 +29,15 @@ function launch(config) {
     server.listen(port, function () {
       console.info(`sftpd: admin endpoint listening on port ${port}`);
     });
+  }
+
+  if (config.sftp) {
+    const {port} = config.sftp;
+    const listener = createConnectionListener();
+    const server = createSFTPServer(config.sftp, listener);
+
+    server.listen(port, function() {
+      console.info(`sftpd: SFTP endpoint listening on port ${port}`);
+    })
   }
 }
