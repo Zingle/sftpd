@@ -37,7 +37,7 @@ function launch(config) {
   if (config.sftp) {
     const sftp = {...config.sftp, userdb};
     const {port} = sftp;
-    const listener = createConnectionListener();
+    const listener = createConnectionListener(sftp);
     const server = createSFTPServer(sftp, listener);
 
     server.listen(port, function() {

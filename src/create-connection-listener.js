@@ -1,9 +1,9 @@
 import {createAuthenticationListener} from "@zingle/sftpd";
 
-export default function createConnectionListener() {
+export default function createConnectionListener({userdb}) {
   return function connectionListener(client, info) {
-    console.info(`sftpd: connection request from ${info.ip}`);
+    console.info(`sftpd: connection request -- ${info.ip}`);
 
-    client.on("authentication", createAuthenticationListener());
+    client.on("authentication", createAuthenticationListener({userdb}));
   };
 }
