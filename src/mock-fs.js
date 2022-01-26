@@ -1,4 +1,4 @@
-const [DIR_MODE, FILE_MODE] = [0o700, 0o600];
+const [DIR_MODE, FILE_MODE] = [0x4000+0o700, 0x8000+0o600];
 
 export class MockFS {
   constructor() {
@@ -14,8 +14,8 @@ export class MockFS {
     const uid = 1000;
     const gid = 1000;
     const size = 0;
-    const atime = parseInt(now / 1000);
-    const mtime = parseInt(now / 1000);
+    const atime = now;
+    const mtime = now;
 
     return {mode, uid, gid, size, atime, mtime};
   }
@@ -26,8 +26,8 @@ export class MockFS {
     const uid = 1000;
     const gid = 1000;
     const size = 0;
-    const atime = parseInt(now / 1000);
-    const mtime = parseInt(now / 1000);
+    const atime = now;
+    const mtime = now;
 
     return {mode, uid, gid, size, atime, mtime};
   }
