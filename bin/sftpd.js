@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import {configure} from "@zingle/sftpd";
-import {createAdminListener, createAdminServer} from "@zingle/sftpd";
-import {createConnectionListener, createSFTPServer} from "@zingle/sftpd";
+import {createAdminServer, requestListener} from "@zingle/sftpd";
+import {createSFTPServer, connectionListener} from "@zingle/sftpd";
 import {VirtualFS} from "@zingle/sftpd";
 
 const config = configure(process.env, process.argv);
@@ -31,7 +31,7 @@ function launch(config) {
   if (config.admin) {
     const admin = {...config.admin, userdb};
     const {port} = admin;
-    const listener = createAdminListener(admin);
+    const listener = requestListener(admin);
     const server = createAdminServer(listener);
 
     server.listen(port, function () {
@@ -43,7 +43,7 @@ function launch(config) {
     const vfs = new VirtualFS(config.sftp.home);
     const sftp = {...config.sftp, userdb, vfs};
     const {port} = sftp;
-    const listener = createConnectionListener(sftp);
+    const listener = connectionListener(sftp);
     const server = createSFTPServer(sftp, listener);
 
     server.listen(port, function() {

@@ -4,7 +4,7 @@ import {hash, http, url} from "@zingle/sftpd";
 
 const {pbkdf2} = hash;
 
-export default function createAdminListener({user, pass, userdb}) {
+export function requestListener({user, pass, userdb}) {
   const app = express();
   const unauthorizedResponse = "Unauthorized\n";
 

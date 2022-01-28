@@ -1,6 +1,5 @@
 import ssh from "ssh2";
 import {join} from "path";
-import {MockFS} from "@zingle/sftpd";
 
 const {utils: {sftp: {
   OPEN_MODE: {READ},
