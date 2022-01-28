@@ -17,3 +17,4 @@ export * as http from "./src/http.js";
 export {MockFS} from "./src/mock-fs.js";
 export {TemporaryStorage} from "./src/storage.js";
 export {default as url} from "./src/url.js";
+export {VirtualFS} from "./src/vfs.js";

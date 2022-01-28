@@ -1,6 +1,6 @@
 import {FTPProtocol, MockFS} from "@zingle/sftpd";
 
-export default function createSesssionListener() {
+export default function createSesssionListener({vfs}) {
   return function sessionListener(accept, reject) {
     const client = this;
     const {username} = client;
@@ -16,11 +16,14 @@ export default function createSesssionListener() {
     accept().once("sftp", (accept, reject) => {
       console.info(`sftpd: starting SFTP session -- ${username}`);
 
-      // create a new mock FS for every SFTP session
-      const fs = {"/": MockFS.mkdir(), "/files": MockFS.mkdir()};
+      // create a sandboxed FS for the user
+      const userVFS = vfs.subfs(username);
+
+      // accept SFTP session and setup handler to cleanup
+      const sftp = accept().on("end", function() { this.end(); });
 
       // implement FTP protocol on SFTP session by attaching listeners
-      FTPProtocol.implement(accept(), fs);
+      FTPProtocol.implement(sftp, userVFS);
     });
   };
 }

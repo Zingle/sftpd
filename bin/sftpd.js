@@ -3,6 +3,7 @@
 import {configure} from "@zingle/sftpd";
 import {createAdminListener, createAdminServer} from "@zingle/sftpd";
 import {createConnectionListener, createSFTPServer} from "@zingle/sftpd";
+import {VirtualFS} from "@zingle/sftpd";
 
 const config = configure(process.env, process.argv);
 
@@ -11,7 +12,11 @@ if (false === launch(config)) {
 }
 
 function launch(config) {
-  const {userdb} = config;
+  const {userdb, debug} = config;
+
+  if (!debug) {
+    console.debug = () => {};
+  }
 
   if (config.help) {
     console.log(`Usage: sftpd [<config-file>]`);
@@ -35,7 +40,8 @@ function launch(config) {
   }
 
   if (config.sftp) {
-    const sftp = {...config.sftp, userdb};
+    const vfs = new VirtualFS(config.sftp.home);
+    const sftp = {...config.sftp, userdb, vfs};
     const {port} = sftp;
     const listener = createConnectionListener(sftp);
     const server = createSFTPServer(sftp, listener);

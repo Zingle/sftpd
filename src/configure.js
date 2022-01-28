@@ -33,11 +33,13 @@ function defaults(config={}) {
   config.sftp = false;
   config.error = false;
   config.userdb = new TemporaryStorage();
+  config.debug = false;
   return config;
 }
 
 function readenv(config, env) {
   if (env.SFTPD_CONFIG) config.conf = env.SFTPD_CONFIG;
+  if (env.DEBUG) config.debug = true;
   return config;
 }
 
@@ -62,7 +64,11 @@ function readargv(config, argv) {
 }
 
 function readconf(config, conf) {
-  if (conf.admin && conf.admin.user && conf.admin.pass) {
+  if (conf.debug) {
+    config.debug = true;
+  }
+
+  if (conf.admin?.user && conf.admin?.pass) {
     const {admin: {user, pass, port}} = conf;
     config.admin = {user, pass, port: DEFAULT_ADMIN_PORT};
 
@@ -76,9 +82,15 @@ function readconf(config, conf) {
     console.warn(`sftpd: admin endpoint not configured`);
   }
 
-  if (conf.sftp && conf.sftp.hostKeys && conf.sftp.hostKeys.length) {
-    const {sftp: {banner, hostKeys, port}} = conf;
-    config.sftp = {hostKeys, banner: DEFAULT_SFTP_BANNER, port: DEFAULT_SFTP_PORT};
+  if (conf.sftp?.hostKeys?.length && conf.sftp?.home) {
+    const {sftp: {home, banner, hostKeys, port}} = conf;
+
+    config.sftp = {
+      hostKeys,
+      home: home || process.cwd(),
+      banner: DEFAULT_SFTP_BANNER,
+      port: DEFAULT_SFTP_PORT
+    };
 
     if (banner) {
       config.sftp.banner = banner;
