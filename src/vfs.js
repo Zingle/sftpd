@@ -42,6 +42,11 @@ export class VirtualFS {
     return Boolean(this.fds.get(fd)?.open);
   }
 
+  async lstat(path) {
+    const rpath = realizePath(this.root, path);
+    return await fs.lstat(rpath);
+  }
+
   async mkdir(path, recursive=false) {
     rpath = realizePath(this.root, path);
 

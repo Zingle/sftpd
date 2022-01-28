@@ -94,6 +94,33 @@ const FTPProtocolImplementation = {
     context.status(OK);
   },
 
+  async fstat(context, handle) {
+    try {
+      const [fd] = handle;
+      const stat = await context.fs.fstat(fd);
+      const {mode, uid, gid, size, atime, mtime} = stat;
+
+      context.attrs({mode, uid, gid, size, atime, mtime});
+    } catch (err) {
+      context.status(FAILURE);
+    }
+  },
+
+  async lstat(context, path) {
+    try {
+      const stat = await context.fs.lstat(path);
+      const {mode, uid, gid, size, atime, mtime} = stat;
+
+      context.attrs({mode, uid, gid, size, atime, mtime});
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        context.status(NO_SUCH_FILE);
+      } else {
+        context.status(FAILURE);
+      }
+    }
+  },
+
   async open(context, path, flags, attrs) {
     try {
       const fd = await context.fs.open(path, flagsToString(flags));
@@ -129,18 +156,6 @@ const FTPProtocolImplementation = {
     }
   },
 
-  async fstat(context, handle) {
-    try {
-      const [fd] = handle;
-      const stat = await context.fs.fstat(fd);
-      const {mode, uid, gid, size, atime, mtime} = stat;
-
-      context.attrs({mode, uid, gid, size, atime, mtime});
-    } catch (err) {
-      context.status(FAILURE);
-    }
-  },
-
   async readdir(context, handle) {
     const [fd] = handle;
 
@@ -162,8 +177,8 @@ const FTPProtocolImplementation = {
 
     for (const entry of [".", "..", ...entries]) {
       const path = join(dir, entry);
-      const stat = await context.fs.stat(path);
-      const type = stat.isDirectory() ? "d" : "-";
+      const stat = await context.fs.lstat(path);
+      const type = stat.isSymbolicLink() ? "l" : (stat.isDirectory() ? "d" : "-");
       const smodes = ["---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"];
       const omode = (stat.mode & parseInt("777", 8)).toString(8);
       const smode = [...omode].map(ch => smodes[ch]).join("");
