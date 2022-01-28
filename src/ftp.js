@@ -129,6 +129,18 @@ const FTPProtocolImplementation = {
     }
   },
 
+  async fstat(context, handle) {
+    try {
+      const [fd] = handle;
+      const stat = await context.fs.fstat(fd);
+      const {mode, uid, gid, size, atime, mtime} = stat;
+
+      context.attrs({mode, uid, gid, size, atime, mtime});
+    } catch (err) {
+      context.status(FAILURE);
+    }
+  },
+
   async readdir(context, handle) {
     const [fd] = handle;
 
