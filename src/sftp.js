@@ -67,7 +67,10 @@ function sesssionListener({vfs}) {
       const userVFS = vfs.subfs(username);
 
       // accept SFTP session and setup handler to cleanup
-      const sftp = accept().on("end", function() { this.end(); });
+      const sftp = accept().on("end", function() {
+        console.info(`sftpd: end of SFTP session -- ${username}`);
+        this.end();
+      });
 
       // implement FTP protocol on SFTP session by attaching listeners
       FTPProtocol.implement(sftp, userVFS);
