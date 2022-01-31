@@ -121,7 +121,19 @@ const FTPProtocolImplementation = {
     }
   },
 
-  // async mkdir(...) { ... },
+  async mkdir(context, path) {
+    try {
+      await context.fs.mkdir(path);
+      context.status(OK);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        context.status(NO_SUCH_FILE);
+      } else {
+        console.error(err);
+        context.status(FAILURE);
+      }
+    }
+  },
 
   async open(context, path, flags, attrs) {
     try {
@@ -211,6 +223,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
+        console.error(err);
         context.status(FAILURE);
       }
     }
@@ -226,6 +239,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
+        console.error(err);
         context.status(FAILURE);
       }
     }
@@ -241,6 +255,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
+        console.error(err);
         context.status(FAILURE);
       }
     }

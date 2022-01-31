@@ -48,7 +48,7 @@ export class VirtualFS {
   }
 
   async mkdir(path, recursive=false) {
-    rpath = realizePath(this.root, path);
+    const rpath = realizePath(this.root, path);
 
     try {
       await fs.mkdir(rpath);
