@@ -87,6 +87,12 @@ export class VirtualFS {
     return resolve("/", path);
   }
 
+  async rename(fromPath, toPath) {
+    const rfrom = realizePath(this.root, fromPath);
+    const rto = realizePath(this.root, toPath);
+    return await fs.rename(rfrom, rto);
+  }
+
   async rmdir(path) {
     const rpath = realizePath(this.root, path);
     return await fs.rmdir(rpath);

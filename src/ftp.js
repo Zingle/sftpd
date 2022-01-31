@@ -229,7 +229,19 @@ const FTPProtocolImplementation = {
     }
   },
 
-  // async rename(...) { ... },
+  async rename(context, fromPath, toPath) {
+    try {
+      await context.fs.rename(fromPath, toPath);
+      context.status(OK);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        context.status(NO_SUCH_FILE);
+      } else {
+        console.error(err);
+        context.status(FAILURE);
+      }
+    }
+  },
 
   async rmdir(context, path) {
     try {
