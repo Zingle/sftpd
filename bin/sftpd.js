@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import {Console} from "console";
 import {configure} from "@zingle/sftpd";
 import {createAdminServer, requestListener} from "@zingle/sftpd";
 import {createSFTPServer, connectionListener} from "@zingle/sftpd";
@@ -15,7 +16,8 @@ function launch(config) {
   const {userdb, debug} = config;
 
   if (!debug) {
-    console.debug = () => {};
+    quiet(console);
+    console.info("sftpd: set DEBUG in env for more detailed logs");
   }
 
   if (config.help) {
@@ -49,5 +51,18 @@ function launch(config) {
     server.listen(port, function() {
       console.info(`sftpd: SFTP endpoint listening on port ${port}`);
     })
+  }
+}
+
+function quiet(console) {
+  return Object.assign(console, {debug, error});
+
+  function debug() {
+    // ignore debug logs
+  }
+
+  function error(err) {
+    const message = `sftpd: error -- ${err?.message || err}`;
+    Console.prototype.error.call(console, message);
   }
 }
