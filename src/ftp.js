@@ -121,6 +121,8 @@ const FTPProtocolImplementation = {
     }
   },
 
+  // async mkdir(...) { ... },
+
   async open(context, path, flags, attrs) {
     try {
       const fd = await context.fs.open(path, flagsToString(flags));
@@ -155,6 +157,8 @@ const FTPProtocolImplementation = {
       }
     }
   },
+
+  // async read(...) { ... },
 
   async readdir(context, handle) {
     const [fd] = handle;
@@ -199,6 +203,10 @@ const FTPProtocolImplementation = {
     context.name([{filename}]);
   },
 
+  // async remove(...) { ... },
+  // async rename(...) { ... },
+  // async rmdir(...) { ... },
+
   async stat(context, path) {
     try {
       const stat = await context.fs.stat(path);
@@ -213,4 +221,6 @@ const FTPProtocolImplementation = {
       }
     }
   }
+
+  // async write(...) { ... }
 }
