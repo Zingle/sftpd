@@ -87,6 +87,11 @@ export class VirtualFS {
     return resolve("/", path);
   }
 
+  async rmdir(path) {
+    const rpath = realizePath(this.root, path);
+    return await fs.rmdir(rpath);
+  }
+
   async stat(path) {
     const rpath = realizePath(this.root, path);
     return await fs.stat(rpath);
@@ -94,6 +99,11 @@ export class VirtualFS {
 
   subfs(path) {
     return new VirtualFS(realizePath(this.root, path));
+  }
+
+  async unlink(path) {
+    const rpath = realizePath(this.root, path);
+    return await fs.unlink(rpath);
   }
 }
 

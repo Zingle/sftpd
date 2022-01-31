@@ -203,9 +203,33 @@ const FTPProtocolImplementation = {
     context.name([{filename}]);
   },
 
-  // async remove(...) { ... },
+  async remove(context, path) {
+    try {
+      await context.fs.unlink(path);
+      context.status(OK);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        context.status(NO_SUCH_FILE);
+      } else {
+        context.status(FAILURE);
+      }
+    }
+  },
+
   // async rename(...) { ... },
-  // async rmdir(...) { ... },
+
+  async rmdir(context, path) {
+    try {
+      await context.fs.rmdir(path);
+      context.status(OK);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        context.status(NO_SUCH_FILE);
+      } else {
+        context.status(FAILURE);
+      }
+    }
+  },
 
   async stat(context, path) {
     try {
