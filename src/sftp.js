@@ -1,5 +1,6 @@
 import {timingSafeEqual} from "crypto";
 import ssh from "ssh2";
+import shadowVerify from "shadow-verify";
 import {FTPProtocol, hash} from "@zingle/sftpd";
 
 const {pbkdf2} = hash;
@@ -20,7 +21,7 @@ function authenticationListener({userdb}) {
     const methods = [];
     const user = await userdb.getItem(ctx.username);
 
-    if (user?.hash) methods.push("password");
+    if (user?.hash || user?.shadow) methods.push("password");
     if (user?.key) methods.push("publickey");
 
     if (methods.includes(ctx.method)) {
@@ -31,7 +32,7 @@ function authenticationListener({userdb}) {
 
     switch (ctx.method) {
       case "password":
-        if (await pbkdf2(ctx.password, user.hash)) {
+        if (await verifyPass(ctx, user)) {
           client.username = ctx.username;
           return ctx.accept();
         } else {
@@ -47,6 +48,16 @@ function authenticationListener({userdb}) {
     }
 
     return ctx.reject(methods);
+
+    async function verifyPass({password}, {hash, shadow}) {
+      if (hash && await pbkdf2(password, hash)) {
+        return true;
+      } else if (!hash && shadow && shadowVerify(password, shadow)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
 
     function verifyKey(ctx, user) {
       const key = ssh.utils.parseKey(user.key);
