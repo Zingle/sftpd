@@ -28,7 +28,7 @@ sftpd /etc/ftp.conf
 Format
 ------
 The configuration file must be a well-formed JSON document.  Check the next
-section, [Setting](#settings) for details about what keys are recognized.
+section, [Settings](#settings) for details about what keys are recognized.
 
 Settings
 --------
