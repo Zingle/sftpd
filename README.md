@@ -11,11 +11,12 @@ install the package globally as root.
 sudo -H npm install -g @zingle/sftpd
 ```
 
-Configuration
-=============
-By default, when the **sftpd** command executes, it looks for a file named
-`sftpd.conf` in the current directory to get its configuration.  You can also
-pass the path to the config file as an optional argument to the command.
+Running
+=======
+To run the SFTP daemon, execute the **sftpd** command.  By default, when the
+**sftpd** command executes, it looks for a file named `sftpd.conf` in the
+current directory to get its configuration.  You can also pass the path to the
+config file as an optional argument to the command.
 
 ```sh
 # load config from ./sftp.conf
@@ -24,6 +25,10 @@ sftpd
 # load config from /etc/ftp.conf
 sftpd /etc/ftp.conf
 ```
+
+Configuration
+=============
+This section describes the configuration file loaded by the **sftpd** command.
 
 Format
 ------
