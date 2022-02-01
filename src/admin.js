@@ -43,7 +43,7 @@ export function requestListener({user, pass, userdb, subdb}) {
     const {username} = req.params;
     const user = await userdb.getItem(username);
 
-    if (!user) return http.send404();
+    if (!user) return http.send404(res);
 
     res.json(user);
   });
