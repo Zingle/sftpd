@@ -15,6 +15,7 @@ export class VirtualFS {
     const fdinfo = this.fds.get(fd);
     await fdinfo.handle.close();
     fdinfo.open = false;
+    fdinfo.pos = 0;
   }
 
   fpath(fd) {
@@ -23,6 +24,14 @@ export class VirtualFS {
     }
 
     return this.fds.get(fd).path;
+  }
+
+  fpos(fd) {
+    if (!this.isOpen(fd)) {
+      throw new Error("bad file descriptor");
+    }
+
+    return this.fds.get(fd).pos;
   }
 
   async fstat(fd, options) {
@@ -71,11 +80,24 @@ export class VirtualFS {
 
     this.fds.set(fd, {
       handle,
+      path: normalizePath(path),
       open: true,
-      path: normalizePath(path)
+      pos: 0
     });
 
     return fd;
+  }
+
+  async read(fd, buffer, offset, length, position) {
+    if (!this.isOpen(fd)) {
+      throw new Error("bad file descriptor");
+    }
+
+    const finfo = this.fds.get(fd);
+    const args = [...arguments].slice(1);
+    const {bytesRead} = await finfo.handle.read(...args);
+
+    finfo.pos += bytesRead;
   }
 
   async readdir(path) {
@@ -110,6 +132,19 @@ export class VirtualFS {
   async unlink(path) {
     const rpath = realizePath(this.root, path);
     return await fs.unlink(rpath);
+  }
+
+  async write(fd, buffer, offset, length, position) {
+    if (!this.isOpen(fd)) {
+      throw new Error("bad file descriptor");
+    }
+
+    const finfo = this.fds.get(fd);
+    const args = [...arguments].slice(1);
+
+    await finfo.handle.write(...args);
+
+    finfo.pos = position + length;
   }
 }
 

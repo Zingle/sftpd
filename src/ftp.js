@@ -170,7 +170,28 @@ const FTPProtocolImplementation = {
     }
   },
 
-  // async read(...) { ... },
+  async read(context, handle, offset, length) {
+    const [fd] = handle;
+
+    try {
+      const stat = await context.fs.fstat(fd);
+
+      if (offset >= stat.size) {
+        context.status(EOF);
+      } else {
+        const pos = await context.fs.fpos(fd);
+        const size = stat.size - pos > length ? length : stat.size - pos;
+        const buffer = new Buffer(size);
+
+        await context.fs.read(fd, buffer, 0, size, offset);
+
+        context.data(buffer);
+      }
+    } catch (err) {
+      console.error(err);
+      context.status(FAILURE);
+    }
+  },
 
   async readdir(context, handle) {
     const [fd] = handle;
@@ -271,7 +292,17 @@ const FTPProtocolImplementation = {
         context.status(FAILURE);
       }
     }
-  }
+  },
 
-  // async write(...) { ... }
+  async write(context, handle, offset, data) {
+    const [fd] = handle;
+
+    try {
+      await context.fs.write(fd, data, 0, data.length, offset);
+      context.status(OK);
+    } catch (err) {
+      console.error(err);
+      context.status(FAILURE);
+    }
+  }
 }
