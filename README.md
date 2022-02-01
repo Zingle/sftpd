@@ -37,11 +37,11 @@ The following configuration keys are recognized.
 
 **admin.user**: basic authentication username used to access the admin API  
 **admin.pass**: basic authentication password used to access the admin API  
-**admin.port***(default: 2200)*: port on which admin API listens  
-**sftp.banner***(default ???)*: banner message to present to SFTP user  
+**admin.port** *(default: 2200)*: port on which admin API listens  
+**sftp.banner** *(default ???)*: banner message to present to SFTP user  
 **sftp.home**: path where SFTP user home directories are found  
 **sftp.hostKeys**: array of PEM-encoded host keys for SFTP endpoint  
-**sftp.port***(default: 22)*: port on which SFTP server listens  
+**sftp.port** *(default: 22)*: port on which SFTP server listens  
 
 Administration
 ==============
