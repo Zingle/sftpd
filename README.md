@@ -60,29 +60,25 @@ All API endpoints that accept a request body expect the request body to be in
 JSON format and an appropriate `Content-Type` header included in the request
 headers.
 
-### Resources
-The Admin API recognizes the endpoints described in this section.
-*Note: this section represents nested keys by using "." delimiters*.
-
-#### /user
+### Resource: /user
 The `/user` endpoint is a service endpoint where new users can be created.
 
-##### POST /user: add new SFTP user
+#### POST /user: add new SFTP user
 **username**: login for SFTP  
 **password**: login password for SFTP (optional)  
 **key**: PEM-encoded public key for SFTP key-based authentication (optional)  
 **forwardURL**: delivery target where user's files are delivered (optional)  
 
-##### 303 See Other
+#### 303 See Other
 On success, a **303** response will be returned with the user URL in the
 `Location` header.
 
-#### /user/{username}
+### Resource: /user/{username}
 The `/user/{username}` endpoint provides information about an existing user.
 
-##### GET /user/{username}: fetch user details
+#### GET /user/{username}: fetch user details
 
-##### 200 OK
+#### 200 OK
 On success, a **200** response will be returned with a JSON body describing the
 user details.
 
