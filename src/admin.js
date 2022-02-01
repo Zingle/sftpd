@@ -4,7 +4,7 @@ import {hash, http, url} from "@zingle/sftpd";
 
 const {pbkdf2} = hash;
 
-export function requestListener({user, pass, userdb}) {
+export function requestListener({user, pass, userdb, subdb}) {
   const app = express();
   const unauthorizedResponse = "Unauthorized\n";
 
@@ -13,12 +13,16 @@ export function requestListener({user, pass, userdb}) {
   app.use(url());
 
   app.post("/user", async (req, res) => {
-    const {username, password, key, ...extra} = req.body;
+    const {username, password, key, forwardURL, ...extra} = req.body;
+    const uri = `/user/${username}`;
     const extras = Object.keys(extra).join(", ");
 
     if (!req.is("json")) return http.send415(res);
     if (!username) return http.send400(res, "username required");
     if (extras) return http.send400(res, `invalid key(s): ${extras}`);
+    if (forwardURL) try { new URL(forwardURL); } catch (err) {
+      return http.send400(res, "invalid forward URL");
+    }
 
     // TODO: make this safer with locked updates
     // TODO: for now, just use primitive eventual consistency
@@ -26,11 +30,13 @@ export function requestListener({user, pass, userdb}) {
       return http.send409(res, `username already exists: ${username}`);
     }
 
-    const hash = password ? await pbkdf2(password) : undefined;
-    const user = {username, hash, key, uri: `/user/${username}`};
-    await userdb.setItem(username, user);
+    await userdb.setItem(username, {
+      username, key, uri,
+      hash: password ? await pbkdf2(password) : undefined,
+      forwardURL: forwardURL ? new URL(forwardURL) : undefined
+    });
 
-    http.send303(res, new URL(user.uri, req.fullURL));
+    http.send303(res, new URL(uri, req.fullURL));
   });
 
   app.get("/user/:username", async (req, res) => {
