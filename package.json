@@ -1,7 +1,7 @@
 {
   "name": "@zingle/sftpd",
   "version": "0.0.1",
-  "description": "SFTP frontend daemon w/ REST interface",
+  "description": "SFTP file forwarding using REST",
   "type": "module",
   "bin": "./bin/sftpd.js",
   "exports": "./index.js",
