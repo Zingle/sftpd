@@ -18,6 +18,8 @@
   "dependencies": {
     "express": "^4.17.2",
     "express-basic-auth": "^1.2.1",
+    "shadow-verify": "^0.0.2",
+    "ssh2": "^1.6.0",
     "tlsopt": "^3.1.0"
   }
 }
