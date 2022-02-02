@@ -181,7 +181,7 @@ const FTPProtocolImplementation = {
       } else {
         const pos = await context.fs.fpos(fd);
         const size = stat.size - pos > length ? length : stat.size - pos;
-        const buffer = new Buffer(size);
+        const buffer = Buffer.alloc(size);
 
         await context.fs.read(fd, buffer, 0, size, offset);
 
