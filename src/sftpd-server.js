@@ -29,8 +29,8 @@ export class SFTPDServer extends EventEmitter {
     if (!pass) throw new Error("http.pass not configured");
     if (!Number.isInteger(port)) throw new Error("http.port must be integer");
 
-    const {userdb} = this;
-    const listener = requestListener({user, pass, userdb});
+    const sftpd = this;
+    const listener = requestListener({sftpd, user, pass});
     const server = createHTTPServer(listener);
 
     server.listen(port, () => {
@@ -52,9 +52,9 @@ export class SFTPDServer extends EventEmitter {
     if (hostKeys.length === 0) throw new Error("sftp.hostKeys is empty");
     if (!Number.isInteger(port)) throw new Error("sftp.port must be integer");
 
-    const {userdb} = this;
+    const sftpd = this;
     const vfs = new VirtualFS(home);
-    const listener = connectionListener({userdb, vfs});
+    const listener = connectionListener({sftpd, vfs});
     const server = createSFTPServer({home, hostKeys, banner}, listener);
 
     server.listen(port, () => {

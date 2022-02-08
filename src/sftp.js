@@ -5,27 +5,27 @@ import {FTPProtocol, hash} from "@zingle/sftpd";
 
 const {pbkdf2} = hash;
 
-export function connectionListener({userdb, vfs}) {
+export function connectionListener({sftpd, vfs}) {
   return function connectionListener(client, info) {
-    console.info(`sftpd: connection request -- ${info.ip}`);
+    client.on("authentication", authenticationListener({sftpd}));
+    client.on("ready", readyListener({sftpd}));
+    client.on("session", sesssionListener({sftpd, vfs}));
 
-    client.on("authentication", authenticationListener({userdb}));
-    client.on("ready", readyListener());
-    client.on("session", sesssionListener({vfs}));
+    sftpd.emit("connection", info.ip);
   };
 }
 
-function authenticationListener({userdb}) {
+function authenticationListener({sftpd}) {
   return async function authenticationListener(ctx) {
     const client = this;
     const methods = [];
-    const user = await userdb.getItem(ctx.username);
+    const user = await sftpd.userdb.getItem(ctx.username);
 
     if (user?.hash || user?.shadow) methods.push("password");
     if (user?.key) methods.push("publickey");
 
     if (methods.includes(ctx.method)) {
-      console.info(`sftpd: authenticating with ${ctx.method} -- ${ctx.username}`);
+      sftpd.emit("authenticating", ctx.method, ctx.username);
     } else {
       return ctx.reject(methods);
     }
@@ -77,13 +77,13 @@ function authenticationListener({userdb}) {
   }
 }
 
-function readyListener() {
+function readyListener({sftpd}) {
   return function readyListener() {
-    console.info(`sftpd: client authenticated -- ${this.username}`);
+    sftpd.emit("authenticated", this.username);
   };
 }
 
-function sesssionListener({vfs}) {
+function sesssionListener({sftpd, vfs}) {
   return function sessionListener(accept, reject) {
     const client = this;
     const {username} = client;
@@ -94,17 +94,17 @@ function sesssionListener({vfs}) {
       return reject();
     }
 
-    console.info(`sftpd: starting session -- ${username}`);
+    sftpd.emit("ssh:session", username);
 
     accept().once("sftp", (accept, reject) => {
-      console.info(`sftpd: starting SFTP session -- ${username}`);
+      sftpd.emit("sftp:session", username);
 
       // create a sandboxed FS for the user
       const userVFS = vfs.subfs(username);
 
       // accept SFTP session and setup handler to cleanup
       const sftp = accept().on("end", function() {
-        console.info(`sftpd: end of SFTP session -- ${username}`);
+        sftpd.emit("sftp:end", username);
         this.end();
       });
 

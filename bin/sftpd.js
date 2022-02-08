@@ -30,6 +30,11 @@ function start(process) {
 
 function attachConsole(server, console) {
   server.on("error", err => console.error(err));
-  server.on("http:listening", port => console.info("HTTP server listening on port", port));
-  server.on("sftp:listening", port => console.info("SFTP server listening on port", port));
+  server.on("http:listening", port => console.info("HTTP server listening --", port));
+  server.on("sftp:listening", port => console.info("SFTP server listening --", port));
+  server.on("connection", ip => console.info("connection request --", ip));
+  server.on("authenticating", (method, user) => console.info("authenticating with", method, "--", user));
+  server.on("ssh:session", user => console.info("starting session --", user));
+  server.on("sftp:session", user => console.info("starting SFTP session --", user));
+  server.on("sftp:end", user => console.info("end of SFTP session --", user));
 }

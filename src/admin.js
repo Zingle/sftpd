@@ -4,7 +4,7 @@ import {hash, http, url} from "@zingle/sftpd";
 
 const {pbkdf2} = hash;
 
-export function requestListener({user, pass, userdb, subdb}) {
+export function requestListener({sftpd, user, pass}) {
   const app = express();
   const unauthorizedResponse = "Unauthorized\n";
 
@@ -26,11 +26,11 @@ export function requestListener({user, pass, userdb, subdb}) {
 
     // TODO: make this safer with locked updates
     // TODO: for now, just use primitive eventual consistency
-    if (await userdb.getItem(username)) {
+    if (await sftpd.userdb.getItem(username)) {
       return http.send409(res, `username already exists: ${username}`);
     }
 
-    await userdb.setItem(username, {
+    await sftpd.userdb.setItem(username, {
       username, key, uri,
       hash: password ? await pbkdf2(password) : undefined,
       forwardURL: forwardURL ? new URL(forwardURL) : undefined
@@ -41,7 +41,7 @@ export function requestListener({user, pass, userdb, subdb}) {
 
   app.get("/user/:username", async (req, res) => {
     const {username} = req.params;
-    const user = await userdb.getItem(username);
+    const user = await sftpd.userdb.getItem(username);
 
     if (!user) return http.send404(res);
 
