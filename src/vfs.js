@@ -1,5 +1,5 @@
 import {promises as fs} from "fs";
-import {join, resolve} from "path";
+import {dirname, join, resolve} from "path";
 
 export class VirtualFS {
   constructor(root="/") {
@@ -65,7 +65,7 @@ export class VirtualFS {
       if (err.code === "EEXIST") {
         return;
       } else if (err.code === "ENOENT" && recursive) {
-        await this.mkdir(dirname(normalizePath(path)));
+        await this.mkdir(dirname(normalizePath(path)), true);
         await fs.mkdir(rpath);
       } else {
         throw err;
