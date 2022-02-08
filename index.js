@@ -5,12 +5,14 @@ export const DEFAULT_SFTP_PORT = 22;
 
 export {requestListener} from "./src/admin.js";
 export {default as configure} from "./src/configure.js";
-export {default as createAdminServer} from "./src/create-admin-server.js";
+export {default as createHTTPServer} from "./src/create-http-server.js";
 export {default as createSFTPServer} from "./src/create-sftp-server.js";
 export {FTPProtocol, FTPSession, FTPRequestContext} from "./src/ftp.js";
 export * as hash from "./src/hash.js";
 export * as http from "./src/http.js";
 export {connectionListener} from "./src/sftp.js";
+export {SFTPDConsole} from "./src/sftpd-console.js";
+export {SFTPDServer} from "./src/sftpd-server.js";
 export {TemporaryStorage} from "./src/storage.js";
 export {default as url} from "./src/url.js";
 export {VirtualFS} from "./src/vfs.js";

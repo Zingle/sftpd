@@ -3,24 +3,32 @@ import {DEFAULT_CONF, DEFAULT_ADMIN_PORT} from "@zingle/sftpd";
 import {DEFAULT_SFTP_BANNER, DEFAULT_SFTP_PORT} from "@zingle/sftpd";
 import {TemporaryStorage} from "@zingle/sftpd";
 
-export default function configure(env, argv) {
+const globalConsole = console;
+
+export default function configure({env, argv}, console=globalConsole) {
   const config = defaults();
   const args = argv.slice(2);
 
   readenv(config, env);
   readargv(config, argv);
 
-  if (config.help || config.error) {
-    return config;
+  if (config.help) {
+    console.log(`Usage: sftpd [<config-file>]`);
+    return false;
+  }
+
+  if (config.error) {
+    console.error(config.error);
+    return false;
   }
 
   try {
     const file = readFileSync(config.conf, {encoding: "utf8"});
     const conf = JSON.parse(file);
-    readconf(config, conf);
+    readconf(config, conf, console);
   } catch (err) {
     if (err.code !== "ENOENT") throw err;
-    console.warn(`sftpd: ENOENT -- ${config.conf}`);
+    console.warn(`ENOENT: ${config.conf}`);
   }
 
   return config;
@@ -29,7 +37,7 @@ export default function configure(env, argv) {
 function defaults(config={}) {
   config.conf = DEFAULT_CONF;
   config.help = false;
-  config.admin = false;
+  config.http = false;
   config.sftp = false;
   config.error = false;
   config.userdb = new TemporaryStorage();
@@ -55,7 +63,7 @@ function readargv(config, argv) {
     } else if (!file) {
       config.conf = file = arg;
     } else {
-      config.error = new Error(`unexpected argument -- ${arg}`);
+      config.error = new Error(`unexpected argument: ${arg}`);
       return config;
     }
   }
@@ -63,23 +71,23 @@ function readargv(config, argv) {
   return config;
 }
 
-function readconf(config, conf) {
+function readconf(config, conf, console) {
   if (conf.debug) {
     config.debug = true;
   }
 
-  if (conf.admin?.user && conf.admin?.pass) {
-    const {admin: {user, pass, port}} = conf;
-    config.admin = {user, pass, port: DEFAULT_ADMIN_PORT};
+  if (conf.http?.user && conf.http?.pass) {
+    const {http: {user, pass, port}} = conf;
+    config.http = {user, pass, port: DEFAULT_ADMIN_PORT};
 
     if (port && Number.isInteger(Number(port)) && port > 0) {
-      config.admin.port = Number(port);
+      config.http.port = Number(port);
     } else if (port) {
-      console.warn(`sftpd: invalid admin port -- ${port}`);
-      console.warn(`sftpd: using default admin port -- ${config.admin.port}`);
+      console.warn(`invalid http port: ${port}`);
+      console.warn(`using default http port: ${config.http.port}`);
     }
   } else {
-    console.warn(`sftpd: admin endpoint not configured`);
+    console.warn(`http endpoint not configured`);
   }
 
   if (conf.sftp?.hostKeys?.length && conf.sftp?.home) {
@@ -99,11 +107,11 @@ function readconf(config, conf) {
     if (port && Number.isInteger(Number(port)) && port > 0) {
       config.sftp.port = Number(port);
     } else if (port) {
-      console.warn(`sftpd: invalid SFTP port -- ${port}`);
-      console.warn(`sftpd: using default SFTP port -- ${config.sftp.port}`);
+      console.warn(`invalid SFTP port: ${port}`);
+      console.warn(`using default SFTP port: ${config.sftp.port}`);
     }
   } else {
-    console.warn(`sftpd: SFTP endpoint not configured`);
+    console.warn(`SFTP endpoint not configured`);
   }
 
   return config;
