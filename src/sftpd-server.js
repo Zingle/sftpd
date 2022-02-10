@@ -4,7 +4,7 @@ import basic from "express-basic-auth";
 import tlsopt from "tlsopt";
 import ssh from "ssh2";
 import {DEFAULT_ADMIN_PORT, DEFAULT_SFTP_PORT, DEFAULT_SFTP_BANNER} from "@zingle/sftpd";
-import {VirtualFS, FTPProtocol} from "@zingle/sftpd";
+import {VirtualFS, FTPProtocol, TemporaryStorage} from "@zingle/sftpd";
 import {hash, http, url} from "@zingle/sftpd";
 
 const {pbkdf2} = hash;

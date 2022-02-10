@@ -12,7 +12,9 @@ function start(process) {
   try {
     const config = configure(process, console);
 
-    if (config) {
+    if (config && config.error) {
+      throw config.error;
+    } else if (config) {
       const server = new SFTPDServer(config);
 
       attachConsole(server, console);
