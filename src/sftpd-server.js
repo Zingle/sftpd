@@ -28,6 +28,11 @@ export class SFTPDServer extends EventEmitter {
     this.sftpServer.close();
   }
 
+  listen() {
+    this.httpServer.listen(this.httpPort);
+    this.sftpServer.listen(this.sftpPort);
+  }
+
   #authenticationListener() {
     const server = this;
 
@@ -117,9 +122,11 @@ export class SFTPDServer extends EventEmitter {
     const listener = this.#requestListener({user, pass});
     const server = tlsopt.createServerSync(listener);
 
-    server.listen(port, () => {
+    server.on("listening", () => {
       this.emit("http:listening", port);
     });
+
+    this.httpPort = port;
 
     return server;
   }
@@ -139,9 +146,11 @@ export class SFTPDServer extends EventEmitter {
     const listener = this.#connectionListener();
     const server = new ssh.Server({banner, hostKeys}, listener);
 
-    server.listen(port, () => {
+    server.on("listening", () => {
       this.emit("sftp:listening", port);
     });
+
+    this.sftpPort = port;
 
     return server;
   }
