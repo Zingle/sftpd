@@ -39,4 +39,6 @@ function attachConsole(server, console) {
   server.on("ssh:session", user => console.info("starting session --", user));
   server.on("sftp:session", user => console.info("starting SFTP session --", user));
   server.on("sftp:end", user => console.info("end of SFTP session --", user));
+  server.on("ftp:receive", (cmd, reqid, data) => console.debug("<<", reqid, cmd, data));
+  server.on("ftp:send", (type, reqid, data) => console.debug("  ", reqid, ">>", `.${type}`, data));
 }

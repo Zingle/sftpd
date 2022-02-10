@@ -235,7 +235,10 @@ export class SFTPDServer extends EventEmitter {
         });
 
         // implement FTP protocol on SFTP session by attaching listeners
-        FTPProtocol.implement(sftp, userVFS);
+        const impl = FTPProtocol.implement(sftp, userVFS);
+
+        impl.on("send", (...args) => server.emit("ftp:send", ...args));
+        impl.on("receive", (...args) => server.emit("ftp:receive", ...args));
       });
     };
   }
