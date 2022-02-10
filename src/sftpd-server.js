@@ -11,11 +11,13 @@ const {pbkdf2} = hash;
 
 export class SFTPDServer extends EventEmitter {
   constructor({
+    dir,
     userdb=new TemporaryStorage(),
     http={},
     sftp={}
   }={}) {
     super();
+    this.vfs = new VirtualFS(dir);
     this.userdb = userdb;
     this.httpServer = this.#createHTTPServer(http);
     this.sftpServer = this.#createSFTPServer(sftp);
@@ -90,11 +92,11 @@ export class SFTPDServer extends EventEmitter {
     }
   }
 
-  #connectionListener({vfs}) {
+  #connectionListener() {
     const server = this;
     const authenticationListener = this.#authenticationListener();
     const readyListener = this.#readyListener();
-    const sessionListener = this.#sessionListener({vfs});
+    const sessionListener = this.#sessionListener();
 
     return function connectionListener(client, info) {
       client.on("authentication", authenticationListener);
@@ -134,8 +136,7 @@ export class SFTPDServer extends EventEmitter {
     if (hostKeys.length === 0) throw new Error("sftp.hostKeys is empty");
     if (!Number.isInteger(port)) throw new Error("sftp.port must be integer");
 
-    const vfs = new VirtualFS(home);
-    const listener = this.#connectionListener({vfs});
+    const listener = this.#connectionListener();
     const server = new ssh.Server({banner, hostKeys}, listener);
 
     server.listen(port, () => {
@@ -206,7 +207,7 @@ export class SFTPDServer extends EventEmitter {
     return app;
   }
 
-  #sessionListener({vfs}) {
+  #sessionListener() {
     const server = this;
 
     return function sessionListener(accept, reject) {
@@ -225,7 +226,7 @@ export class SFTPDServer extends EventEmitter {
         server.emit("sftp:session", username);
 
         // create a sandboxed FS for the user
-        const userVFS = vfs.subfs(username);
+        const userVFS = server.vfs.subfs(username);
 
         // accept SFTP session and setup handler to cleanup
         const sftp = accept().on("end", function() {
