@@ -10,5 +10,6 @@ export * as http from "./src/http.js";
 export {SFTPDConsole} from "./src/sftpd-console.js";
 export {SFTPDServer} from "./src/sftpd-server.js";
 export {TemporaryStorage} from "./src/storage.js";
+export {Task} from "./src/task.js";
 export {default as url} from "./src/url.js";
 export {VirtualFS} from "./src/vfs.js";
