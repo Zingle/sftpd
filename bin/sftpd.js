@@ -12,10 +12,13 @@ function start(process) {
   try {
     const config = configure(process, console);
 
-    if (config) {
+    if (config && config.error) {
+      throw config.error;
+    } else if (config) {
       const server = new SFTPDServer(config);
 
       attachConsole(server, console);
+      server.listen();
 
       process.on("SIGTERM", () => {
         console.info("shutting down after receiving SIGTERM");
@@ -37,4 +40,6 @@ function attachConsole(server, console) {
   server.on("ssh:session", user => console.info("starting session --", user));
   server.on("sftp:session", user => console.info("starting SFTP session --", user));
   server.on("sftp:end", user => console.info("end of SFTP session --", user));
+  server.on("ftp:receive", (cmd, reqid, data) => console.debug("<<", reqid, cmd, data));
+  server.on("ftp:send", (type, reqid, data) => console.debug("  ", reqid, ">>", `.${type}`, data));
 }
