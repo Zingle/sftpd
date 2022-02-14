@@ -5,7 +5,7 @@ const PBKDF_ITERATIONS = 2048;
 const PBKDF_KEY_LENGTH = 32;
 const PBKDF_SALT_LENGTH = 16;
 
-export async function pbkdf2(password, verify=undefined) {
+export default async function pbkdf2(password, verify=undefined) {
   if (verify !== undefined) {
     let [empty, digest, keylen, iterations, salt, key] = verify.split("$");
 

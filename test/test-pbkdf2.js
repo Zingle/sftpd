@@ -1,7 +1,5 @@
 import expect from "expect.js";
-import {hash} from "@zingle/sftpd";
-
-const {pbkdf2} = hash;
+import {pbkdf2} from "@zingle/sftpd";
 
 describe("pbkdf2(plain, [verifyHash])", () => {
   const plain = "foo";

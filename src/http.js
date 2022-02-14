@@ -73,6 +73,6 @@ export function send415(res) {
   http415()(null, res);
 }
 
-export function send500() {
+export function send500(res) {
   http500()(null, res);
 }
