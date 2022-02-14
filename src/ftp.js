@@ -1,5 +1,6 @@
-import ssh from "ssh2";
+import {EventEmitter} from "events";
 import {join} from "path";
+import ssh from "ssh2";
 
 const {utils: {sftp: {
   OPEN_MODE: {READ},
@@ -13,17 +14,22 @@ export class FTPProtocol {
   }
 
   static implement(sftp, fs) {
+    const events = new EventEmitter();
     const session = new FTPSession(sftp, fs);
 
     Object.entries(FTPProtocolImplementation).forEach(([name, method]) => {
       const command = name.toUpperCase();
 
       sftp.on(command, (reqid, ...args) => {
-        console.debug("<<", reqid, command, ...args);
         const context = new FTPRequestContext(command, session, reqid, ...args);
+        events.emit("receive", command, reqid, args);
+        context.on("send", (...args) => events.emit("send", ...args));
+        context.on("error", err => events.emit("error", err));
         method(...context);
       });
     });
+
+    return events;
   }
 
   static formatTime(date, now=new Date()) {
@@ -44,8 +50,9 @@ export class FTPProtocol {
   }
 }
 
-export class FTPRequestContext {
+export class FTPRequestContext extends EventEmitter {
   constructor(command, session, reqid, ...args) {
+    super();
     this.command = command;
     this.session = session;
     this.reqid = reqid;
@@ -58,11 +65,16 @@ export class FTPRequestContext {
     yield* [this, ...this.args];
   }
 
-  attrs(attrs)    { this.session.attrs(this.reqid, attrs); }
-  data(buffer)    { this.session.data(this.reqid, buffer); }
-  handle(handles) { this.session.handle(this.reqid, handles); }
-  name(names)     { this.session.name(this.reqid, names); }
-  status(status)  { this.session.status(this.reqid, status); }
+  attrs(attrs)    { this.#send("attrs", attrs); }
+  data(buffer)    { this.#send("data", buffer); }
+  handle(handles) { this.#send("handle", handles); }
+  name(names)     { this.#send("name", names); }
+  status(status)  { this.#send("status", status); }
+
+  #send(type, data) {
+    this.emit("send", type, this.reqid, data);
+    this.session[type](this.reqid, data);
+  }
 }
 
 export class FTPSession {
@@ -72,7 +84,6 @@ export class FTPSession {
   }
 
   #send(type, reqid, data) {
-    console.debug("  ", reqid, ">>", `.${type}`, data);
     this.sftp[type](reqid, data);
   }
 
@@ -129,7 +140,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
-        console.error(err);
+        context.emit("error", err);
         context.status(FAILURE);
       }
     }
@@ -143,7 +154,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
-        console.error(err);
+        context.emit("error", err);
         context.status(FAILURE);
       }
     }
@@ -164,7 +175,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
-        console.error(err);
+        context.emit("error", err);
         context.status(FAILURE);
       }
     }
@@ -188,7 +199,7 @@ const FTPProtocolImplementation = {
         context.data(buffer);
       }
     } catch (err) {
-      console.error(err);
+      context.emit("error", err);
       context.status(FAILURE);
     }
   },
@@ -244,7 +255,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
-        console.error(err);
+        context.emit("error", err);
         context.status(FAILURE);
       }
     }
@@ -258,7 +269,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
-        console.error(err);
+        context.emit("error", err);
         context.status(FAILURE);
       }
     }
@@ -272,7 +283,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
-        console.error(err);
+        context.emit("error", err);
         context.status(FAILURE);
       }
     }
@@ -288,7 +299,7 @@ const FTPProtocolImplementation = {
       if (err.code === "ENOENT") {
         context.status(NO_SUCH_FILE);
       } else {
-        console.error(err);
+        context.emit("error", err);
         context.status(FAILURE);
       }
     }
@@ -301,7 +312,7 @@ const FTPProtocolImplementation = {
       await context.fs.write(fd, data, 0, data.length, offset);
       context.status(OK);
     } catch (err) {
-      console.error(err);
+      context.emit("error", err);
       context.status(FAILURE);
     }
   }
