@@ -1,45 +1,62 @@
 #!/usr/bin/env node
 
-import {configure, SFTPDServer, SFTPDConsole} from "@zingle/sftpd";
+import tlsopt from "tlsopt";
+import ssh from "ssh2";
+import {TemporaryStorage} from "@zingle/sftpd";
+import {patchConsole, readConfig} from "@zingle/sftpd";
+import {requestListener, connectionListener} from "@zingle/sftpd";
 
-start(process);
+if (!start(process)) {
+  console.error("SFTPD failed to start");
+  process.exit(1);
+}
 
 function start(process) {
-  const console = SFTPDConsole.fromProcess(process);
-
-  console.verbose = Boolean(process.env.DEBUG);
-
   try {
-    const config = configure(process, console);
+    patchConsole(process);
 
-    if (config && config.error) {
-      throw config.error;
-    } else if (config) {
-      const server = new SFTPDServer(config);
+    const config = readConfig(process);
+    const userdb = new TemporaryStorage();
+    const home = config.dir;
+    const httpServer = makeHTTPServer({...config.http, userdb});
+    const sftpServer = makeSFTPServer({...config.sftp, userdb, home});
 
-      attachConsole(server, console);
-      server.listen();
+    httpServer.listen(config.http.port);
+    sftpServer.listen(config.sftp.port);
 
-      process.on("SIGTERM", () => {
-        console.info("shutting down after receiving SIGTERM");
-        server.close();
-      });
-    }
+    process.on("SIGTERM", () => {
+      console.info("shutting down after receiving SIGTERM");
+      httpServer.close();
+      sftpServer.close();
+    });
+
+    return true;
   } catch (err) {
     console.error(err);
-    process.exit(1);
+    return false;
   }
 }
 
-function attachConsole(server, console) {
-  server.on("error", err => console.error(err));
-  server.on("http:listening", port => console.info("HTTP server listening --", port));
-  server.on("sftp:listening", port => console.info("SFTP server listening --", port));
-  server.on("connection", ip => console.info("connection request --", ip));
-  server.on("authenticating", (method, user) => console.info("authenticating with", method, "--", user));
-  server.on("ssh:session", user => console.info("starting session --", user));
-  server.on("sftp:session", user => console.info("starting SFTP session --", user));
-  server.on("sftp:end", user => console.info("end of SFTP session --", user));
-  server.on("ftp:receive", (cmd, reqid, data) => console.debug("<<", reqid, cmd, data));
-  server.on("ftp:send", (type, reqid, data) => console.debug("  ", reqid, ">>", `.${type}`, data));
+function makeHTTPServer({user, pass, userdb}) {
+  const listener = requestListener({user, pass, userdb});
+  const server = tlsopt.createServerSync(listener);
+
+  server.on("listening", () => {
+    const {port} = server.address();
+    console.info("HTTP server listening on port", port);
+  });
+
+  return server;
+}
+
+function makeSFTPServer({hostKeys, banner, userdb, home}) {
+  const listener = connectionListener({userdb, home});
+  const server = new ssh.Server({banner, hostKeys}, listener);
+
+  server.on("listening", () => {
+    const {port} = server.address();
+    console.info("SFTP server listening on port", port);
+  });
+
+  return server;
 }
