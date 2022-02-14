@@ -1,24 +1,19 @@
 import {readFileSync} from "fs";
 import {DEFAULT_CONF, DEFAULT_ADMIN_PORT} from "@zingle/sftpd";
 import {DEFAULT_SFTP_BANNER, DEFAULT_SFTP_PORT} from "@zingle/sftpd";
-import {TemporaryStorage} from "@zingle/sftpd";
 
 const globalConsole = console;
 
 export default function configure({env, argv}, console=globalConsole) {
   const config = defaults();
-  const args = argv.slice(2);
 
-  readenv(config, env);
+  if (env.SFTPD_CONFIG) config.conf = env.SFTPD_CONFIG;
+  if (env.DEBUG) config.debug = true;
+
   readargv(config, argv);
 
   if (config.help) {
-    console.log(`Usage: sftpd [<config-file>]`);
-    return false;
-  }
-
-  if (config.error) {
-    console.error(config.error);
+    console.log(`Usage: sftpd [--help] [<conf-file>]`);
     return false;
   }
 
@@ -27,8 +22,7 @@ export default function configure({env, argv}, console=globalConsole) {
     const conf = JSON.parse(file);
     readconf(config, conf, console);
   } catch (err) {
-    if (err.code !== "ENOENT") throw err;
-    console.warn(`ENOENT: ${config.conf}`);
+    config.error = err;
   }
 
   return config;
@@ -36,12 +30,10 @@ export default function configure({env, argv}, console=globalConsole) {
 
 function defaults(config={}) {
   config.conf = DEFAULT_CONF;
+  config.dir = process.cwd();
   config.help = false;
-  config.http = false;
-  config.sftp = false;
-  config.error = false;
-  config.userdb = new TemporaryStorage();
   config.debug = false;
+  config.error = null;
   return config;
 }
 
@@ -76,42 +68,50 @@ function readconf(config, conf, console) {
     config.debug = true;
   }
 
-  if (conf.http?.user && conf.http?.pass) {
-    const {http: {user, pass, port}} = conf;
-    config.http = {user, pass, port: DEFAULT_ADMIN_PORT};
-
-    if (port && Number.isInteger(Number(port)) && port > 0) {
-      config.http.port = Number(port);
-    } else if (port) {
-      console.warn(`invalid http port: ${port}`);
-      console.warn(`using default http port: ${config.http.port}`);
-    }
-  } else {
-    console.warn(`http endpoint not configured`);
+  if (conf.dir) {
+    config.dir = conf.dir;
   }
 
-  if (conf.sftp?.hostKeys?.length && conf.sftp?.home) {
-    const {sftp: {home, banner, hostKeys, port}} = conf;
+  if (conf.http) {
+    if (conf.http.user && conf.http.pass) {
+      const {http: {user, pass, port}} = conf;
+      config.http = {user, pass, port: DEFAULT_ADMIN_PORT};
 
-    config.sftp = {
-      hostKeys,
-      home: home || process.cwd(),
-      banner: DEFAULT_SFTP_BANNER,
-      port: DEFAULT_SFTP_PORT
-    };
-
-    if (banner) {
-      config.sftp.banner = banner;
-    }
-
-    if (port && Number.isInteger(Number(port)) && port > 0) {
-      config.sftp.port = Number(port);
-    } else if (port) {
-      console.warn(`invalid SFTP port: ${port}`);
-      console.warn(`using default SFTP port: ${config.sftp.port}`);
+      if (port && Number.isInteger(port) && port > 0) {
+        config.http.port = port;
+      } else if (port) {
+        config.error = new Error("http port is invalid");
+      }
+    } else if (conf.http.user) {
+      config.error = new Error("http pass not configured");
+    } else {
+      config.error = new Error("http user not configured");
     }
   } else {
-    console.warn(`SFTP endpoint not configured`);
+    config.error = new Error("http endpoint not configured");
+  }
+
+  if (conf.sftp) {
+    if (conf.sftp.hostKeys?.length) {
+      const {sftp: {hostKeys, port, banner}} = conf;
+
+      config.sftp = {
+        hostKeys,
+        banner: DEFAULT_SFTP_BANNER, port: DEFAULT_SFTP_PORT
+      };
+
+      if (banner) config.sftp.banner = banner;
+
+      if (port && Number.isInteger(port) && port > 0) {
+        config.sftp.port = port;
+      } else if (port) {
+        config.error = new Error("sftp port is invalid");
+      }
+    } else {
+      config.error = new Error("sftp host keys not configured");
+    }
+  } else {
+    config.error = new Error("sftp endpoint not configured");
   }
 
   return config;
