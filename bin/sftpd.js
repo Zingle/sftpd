@@ -18,6 +18,7 @@ function start(process) {
       const server = new SFTPDServer(config);
 
       attachConsole(server, console);
+      server.listen();
 
       process.on("SIGTERM", () => {
         console.info("shutting down after receiving SIGTERM");
