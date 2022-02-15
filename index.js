@@ -9,5 +9,5 @@ export {default as fullURL} from "./src/full-url.js";
 export * as http from "./src/http.js";
 export {requestListener, connectionListener} from "./src/listener.js";
 export {default as pbkdf2} from "./src/pbkdf2.js";
-export {TemporaryStorage} from "./src/storage.js";
+export {TemporaryStorage, Sqlite3Storage} from "./src/storage.js";
 export {default as task} from "./src/task.js";

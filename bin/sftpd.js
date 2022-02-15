@@ -1,25 +1,28 @@
 #!/usr/bin/env node
 
+import {join} from "path";
 import tlsopt from "tlsopt";
 import ssh from "ssh2";
-import {TemporaryStorage} from "@zingle/sftpd";
+import {open} from "sqlite";
+import Sqlite3 from "sqlite3";
+import {Sqlite3Storage} from "@zingle/sftpd";
 import {patchConsole, readConfig} from "@zingle/sftpd";
 import {requestListener, connectionListener} from "@zingle/sftpd";
 import {task, forwarder} from "@zingle/sftpd";
 
-if (!start(process)) {
+if (!await start(process)) {
   console.error("SFTPD failed to start");
   process.exit(1);
 }
 
-function start(process) {
+async function start(process) {
   try {
     patchConsole(process);
 
     const config = readConfig(process);
-    const userdb = new TemporaryStorage();
     const home = config.dir;
     const root = config.dir;
+    const userdb = await makeStorage(root);
     const httpServer = makeHTTPServer({...config.http, userdb});
     const sftpServer = makeSFTPServer({...config.sftp, userdb, home});
     const forwarder = makeForwarder({...config.forward, userdb, root});
@@ -69,4 +72,14 @@ function makeSFTPServer({hostKeys, banner, userdb, home}) {
   });
 
   return server;
+}
+
+async function makeStorage(dir) {
+  const filename = join(dir, "user.db");
+  const driver = Sqlite3.Database;
+  const db = await open({filename, driver});
+
+  await Sqlite3Storage.initialize(db);
+
+  return new Sqlite3Storage(db);
 }

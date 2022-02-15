@@ -24,6 +24,9 @@
     "node-fetch": "^3.2.0",
     "proper-lockfile": "^4.1.2",
     "shadow-verify": "^0.0.2",
+    "sql-template-strings": "^2.2.2",
+    "sqlite": "^4.0.23",
+    "sqlite3": "^5.0.2",
     "ssh2": "^1.6.0",
     "tlsopt": "^3.1.0"
   },
