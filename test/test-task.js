@@ -1,22 +1,20 @@
 import expect from "expect.js";
+import sinon from "sinon";
 import {Task} from "@zingle/sftpd";
 
 describe("Task", () => {
-  const delay = 100;
-  let task;
+  let task, runs;
 
   beforeEach(() => {
-    task = new Task(noop, delay);
+    runs = 0;
+    task = Task(async function() {
+      await new Promise(go => setTimeout(go, 0));
+      runs++;
+    }, 10);
   });
 
-  afterEach(() => {
-    task.stop();
-  });
-
-  describe("constructor(task, [delay])", () => {
-    it("should initialize task", () => {
-      expect(task.task).to.be(noop);
-      expect(task.delay).to.be(delay);
+  describe("(task, [interval])", () => {
+    it("should initialize status flags", () => {
       expect(task.started).to.be(false);
       expect(task.running).to.be(false);
       expect(task.draining).to.be(false);
@@ -24,157 +22,97 @@ describe("Task", () => {
   });
 
   describe(".start()", () => {
-    it("should return true if task just started", () => {
-      expect(task.start()).to.be(true);
-    });
+    it("should run task in loop", async () => {
+      return new Promise((resolve, reject) => {
+        task = Task(resolveOnThirdRun, 10);
+        task.start();
 
-    it("should return false if task already started", () => {
-      task.start();
-      expect(task.start()).to.be(false);
-    });
-
-    it("should run task repeatedly", async () => {
-      let runs = 0;
-
-      task = new Task(task, 5);
-      task.start();
-
-      await new Promise(go => setTimeout(go, 25));
-      task.stop();
-      expect(runs).to.be.greaterThan(2);
-
-      async function task() {
-        await new Promise(go => setTimeout(go, 0));
-        runs++;
-      }
+        async function resolveOnThirdRun() {
+          if (runs++ >= 2) {
+            task.stop();
+            resolve();
+          }
+        }
+      });
     });
   });
 
   describe(".stop()", () => {
-    it("should return false if task already stopped", () => {
-      expect(task.stop()).to.be(false);
-    });
+    it("should stop task from running", async () => {
+      const runsA = runs;
 
-    it("should return true if task just stopped", () => {
+      // start, then wait for task to run
       task.start();
-      expect(task.stop()).to.be(true);
-    });
-
-    it("should stop running task", async () => {
-      let runs = 0;
-
-      task = new Task(task, 5);
-      task.start();
-
       await new Promise(go => setTimeout(go, 10));
+
+      // now stop, then wait for task to drain
       task.stop();
-      const ran = runs;
-
       await new Promise(go => setTimeout(go, 10));
-      expect(runs).to.be(ran);
 
-      async function task() {
-        runs++;
-      }
+      const runsB = runs;
+      expect(runsB).to.be.greaterThan(runsA);
+
+      // inject artificial wait, then check value again
+      await new Promise(go => setTimeout(go, 10));
+      const runsC = runs;
+      expect(runsC).to.be(runsB);
     });
   });
 
   describe(".started", () => {
-    it("should be true when task has been started", () => {
+    it("should be true if task has been started", () => {
       expect(task.started).to.be(false);
-
       task.start();
       expect(task.started).to.be(true);
-
       task.stop();
       expect(task.started).to.be(false);
     });
   });
 
   describe(".running", () => {
-    it("should be true when task is running", async () => {
-      const enter = synch();
-      const exit = synch();
+    it("should be true if task is currently running", () => {
+      let done;
 
-      // running is false immediately after starting task
-      task = new Task(task, delay);
+      task = Task(run, 15);
       task.start();
       expect(task.running).to.be(false);
 
-      // once task is entered, running is true
-      await enter.wait();
-      expect(task.running).to.be(true);
+      return new Promise(resolve => {
+        done = function() {
+          expect(task.running).to.be(false);
+          resolve();
+        };
+      });
 
-      // after task exits, running is false
-      await exit.wait();
-      expect(task.running).to.be(false);
-
-      task.stop();
-
-      async function task() {
-        enter.release();
-        await new Promise(go => setTimeout(go, 0));
-        exit.release();
+      async function run() {
+        expect(task.running).to.be(true);
+        task.stop();
+        setTimeout(done, 0);
       }
     });
   });
 
   describe(".draining", () => {
-    it("should be true when task is stopped, but still running", async () => {
-      const enter = synch();
-      const exit = synch();
+    it("should be true if stopped but still running", () => {
+      let done;
 
-      // draining is false after starting a task
-      task = new Task(task, delay);
+      task = Task(run, 15);
       task.start();
       expect(task.draining).to.be(false);
 
-      // draining is false after task begins running
-      await enter.wait();
-      expect(task.draining).to.be(false);
+      return new Promise(resolve => {
+        done = function() {
+          expect(task.draining).to.be(false);
+          resolve();
+        };
+      });
 
-      // draining is true after stopping running task
-      task.stop();
-      expect(task.draining).to.be(true);
-
-      // draining is false after task runs
-      exit.release();
-      expect(task.draining).to.be(true);
-
-      async function task() {
-        enter.release();
-        await exit.wait();
+      async function run() {
+        expect(task.draining).to.be(false);
+        task.stop();
+        expect(task.draining).to.be(true);
+        setTimeout(done, 25);
       }
     });
   });
-
-  async function noop() {
-    await new Promise(go => setTimeout(go, 0));
-  }
-
-  function release(sync) {
-    return async function release() {
-      sync.release();
-      await new Promise(go => setTimeout(go, 0));
-    }
-  }
-
-  function wait(sync) {
-    return async function wait() {
-      await sync.wait();
-    }
-  }
 });
-
-function synch() {
-  let release;
-
-  const promise = new Promise((resolve, reject) => {
-    release = resolve;
-  });
-
-  return {
-    async wait() { return promise; },
-    release() { release(); }
-  }
-}

@@ -1,75 +1,66 @@
 import {EventEmitter} from "events";
 
-export class Task extends EventEmitter {
-  #state = {};
+export default function task(task, interval=60000) {
+  let started = false;
+  let running = false;
+  let draining = false;
+  let timeout = false;
 
-  constructor(task, delay=60000) {
-    super();
+  const controller = {
+    start, stop,
+    get started() { return started; },
+    get running() { return running; },
+    get draining() { return draining; }
+  };
 
-    this.task = task;
-    this.delay = delay;
+  Object.setPrototypeOf(controller, EventEmitter.prototype);
+  EventEmitter.call(controller);
 
-    this.#state.cancel = false;
-    this.#state.started = false;
-    this.#state.running = false;
-    this.#state.draining = false;
-  }
+  return controller;
 
-  start() {
-    const state = this.#state;
-    const {task, delay} = this;
-
-    if (state.started) {
+  function start() {
+    if (started) {
       return false;
     } else {
-      state.started = true;
-      state.draining = false;
-      state.cancel = setTimeout(runtask, 0);
+      timeout = setTimeout(run, 0);
+      started = true;
       return true;
     }
+  };
 
-    async function runtask() {
-      // task is now running and un-cancellable
-      state.running = true;
-      state.cancel = false;
-
-      try {
-        await task();
-      } catch (err) {
-        this.emit("error", err);
-      } finally {
-        state.running = false;
-        state.draining = false;
+  function stop() {
+    if (started) {
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = false;
       }
 
-      // if task is still active, schedule the next run
-      if (state.started) {
-        state.cancel = setTimeout(runtask, delay);
-      }
-    }
-  }
-
-  stop() {
-    const state = this.#state;
-
-    if (state.started) {
-      state.started = false;
-
-      // cancel the next run if possible
-      if (state.cancel) {
-        clearTimeout(state.cancel);
-        state.cancel = false;
-      } else {
-        state.draining = true;
+      if (running) {
+        draining = true;
       }
 
+      started = false;
       return true;
     } else {
       return false;
     }
   }
 
-  get draining() { return this.#state.draining; }
-  get running() { return this.#state.running; }
-  get started() { return this.#state.started; }
+  async function run() {
+    timeout = false;
+    running = true;
+
+    try {
+      await task();
+    } catch (err) {
+      controller.emit("error", err);
+    }
+
+    running = false;
+    draining = false;
+
+    if (started) {
+      timeout = setTimeout(run, interval);
+    }
+  }
 }
