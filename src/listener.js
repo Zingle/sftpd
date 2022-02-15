@@ -82,7 +82,7 @@ export function connectionListener({userdb, home}) {
 function readyListener() {
   return function readyListener() {
     const client = this;
-    console.info("authenticated", client.username);
+    console.info("authenticated --", client.username);
   };
 }
 

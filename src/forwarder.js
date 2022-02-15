@@ -12,21 +12,31 @@ export default function forwarder({root, userdb, wait=5}) {
       console.info("forwarding files from", root);
       for await (const {path, mtime} of enumerate(root)) {
         const relpath = resolve("/", path.slice(root.length));
-        const [_, username] = relpath.split("/", 2);
+        const [_, username, haspath] = relpath.split("/", 3);
 
-        if (!username) continue;
+        if (!username || !haspath) {
+          console.debug("skipping external file --", path);
+          continue;
+        }
 
         const user = await userdb.getItem(username);
 
-        if (!user) continue;
+        if (!user) {
+          console.debug("skipping file for missing user --", username);
+          continue;
+        }
 
         const {forwardURL} = user;
 
-        if (forwardURL && mtime.getTime() + wait*60000 < Date.now()) {
+        if (!forwardURL) {
+          console.debug("no forwardURL --", username);
+        } else if (mtime.getTime() + wait*60000 < Date.now()) {
           console.debug("forwarding", path, "to", forwardURL);
           await forwardFile(path, forwardURL);
           console.info("removing forwarded file", path);
           await fs.unlink(path);
+        } else {
+          console.debug("waiting for file to age --", path);
         }
       }
     } finally {
