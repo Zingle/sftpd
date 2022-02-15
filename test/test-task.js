@@ -1,8 +1,8 @@
 import expect from "expect.js";
 import sinon from "sinon";
-import {Task} from "@zingle/sftpd";
+import {task as Task} from "@zingle/sftpd";
 
-describe("Task", () => {
+describe("task", () => {
   let task, runs;
 
   beforeEach(() => {
