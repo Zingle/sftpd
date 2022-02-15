@@ -30,15 +30,16 @@ export function read({env, argv}) {
 }
 
 function validateConfig(config) {
-  let {dir, http, sftp, ...unknown} = config;
+  let {dir, http, sftp, forward, ...unknown} = config;
 
   validateEmpty(unknown);
 
   dir = dir || process.cwd();
   http = validateHTTPConfig(http);
   sftp = validateSFTPConfig(sftp);
+  forward = validateForwardConfig(forward);
 
-  return {dir, http, sftp};
+  return {dir, http, sftp, forward};
 }
 
 function validateEmpty(object, context="") {
@@ -85,4 +86,17 @@ function validateSFTPConfig(sftp) {
 
   hostKeys = [...hostKeys];
   return {hostKeys, banner, port};
+}
+
+function validateForwardConfig(forward={}) {
+  const config = {};
+  const {wait} = forward;
+
+  if (wait !== undefined) {
+    if (!Number.isInteger(wait)) throw new Error("invalid forward wait");
+    if (wait < 0) throw new Error("invalid forward wait");
+    config.wait = wait;
+  }
+
+  return config;
 }
